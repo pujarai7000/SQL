@@ -1,0 +1,67 @@
+--Data Cleaning (Run Once)
+DELETE FROM Customers
+WHERE c1 = 'CustomerID';
+
+
+--INNER JOIN: Show customer name and product ordered.
+SELECT Customers.c2 as Customername ,Orders.c3 as Productname
+FROM Customers 
+INNER JOIN Orders 
+ON Customers.c1 = Orders.c2;
+
+--INNER JOIN: Show customer name, city, order ID, and product.
+SELECT Orders.c1 as OrderId,Customers.c2 as Customername ,Customers.c3 as Cities ,Orders.c3 as Productname
+FROM Customers 
+INNER JOIN Orders 
+ON Customers.c1 = Orders.c2;
+
+--LEFT JOIN: Show all customers and their products, including customers with no orders.
+SELECT Customers.c2 as Customername ,Orders.c3 as Productname
+FROM Customers 
+LEFT JOIN Orders 
+ON Customers.c1 = Orders.c2;
+
+--LEFT JOIN + NULL: Show only customers who have never placed an order.
+SELECT Customers.c2 as Customername ,Orders.c3 as Productname
+FROM Customers 
+LEFT JOIN Orders 
+ON Customers.c1 = Orders.c2
+WHERE Orders.c3 IS NULL;
+
+--JOIN + COUNT: Count how many orders each customer placed.
+SELECT Customers.c2 as Customername ,COUNT(Orders.c3)as no_of_orders
+FROM Customers 
+INNER JOIN Orders 
+ON Customers.c1 = Orders.c2
+group BY CUSTOMERS. c2;
+
+--JOIN + GROUP BY: Count how many orders came from each city.
+DELETE FROM Customers
+WHERE c1 = 'CustomerID';
+
+SELECT Customers.c3 as city ,COUNT(Orders.c3)as no_of_orders
+FROM Customers 
+INNER JOIN Orders 
+ON Customers.c1 = Orders.c2
+group BY CUSTOMERS.c3;
+
+--JOIN + HAVING: Show customers who placed more than 1 order.
+SELECT DISTINCT(Customers.c2 )as Customername ,COUNT(Orders.c3)as no_of_orders
+FROM Customers 
+INNER JOIN Orders 
+ON Customers.c1 = Orders.c2
+group BY CUSTOMERS.c2
+Having COUNT( Orders.c3) >1;
+
+--JOIN + ORDER BY: Show customers and order counts from highest to lowest.
+SELECT Customers.c2 as Customername ,COUNT(Orders.c3)as no_of_orders
+FROM Customers 
+INNER JOIN Orders 
+ON Customers.c1 = Orders.c2
+group BY CUSTOMERS.c2
+ORDER BY COUNT(Orders.c3)  DESC;
+
+
+
+
+
