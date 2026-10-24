@@ -1,0 +1,207 @@
+
+--checked  the data type of imported table 
+PRAGMA table_info(data);
+
+--How many songs are in the dataset ?
+Select COUNT(*)
+From data;
+
+--How many songs were liked?
+---sum approach 
+Select SUM(c14) as liked_song
+From data;
+
+--count approach 
+Select count(*) 
+From data
+WHERE c14=1;
+
+--How many songs were not liked?
+Select count(*) 
+From data
+WHERE c14=0;
+
+--what is the average danceability of all songs?
+Select AVG(CAST(c1 AS REAL)) 
+From data;
+
+--what is the average energy of all songs ?
+Select AVG(CAST(c2 AS real)) 
+From data;
+
+--How many songs exists for each musical key ?
+Select CAST(c3 as integer) as musical_key,
+       COUNT(*) as no_of_song
+From data
+Group By CAST( c3 as integer) ;
+
+--What is the average danceability for liked vs disliked songs?
+Select  cast(c14 AS real) as liked_status,
+       AVG(CAST (c1 as real) )as avg_danceability
+From data 
+GROUP BY c14;
+
+--What is the average energy for liked vs disliked songs?DELETE FROM data
+SELECT AVG(c2) as avg_energy ,c14 as liked_status
+From data
+GROUP by c14;
+
+--Which time signature appears most frequently?
+SELECT COUNT (* ) as frequency,c13 as time_signature
+From data
+GROUP by c13
+ORDER BY frequency DESC
+LIMIT 1;
+
+
+--Which key has the highest average energy?
+SELECT AVG(c2) as avg_energy, c3 as keys
+From data
+GROUP BY c3
+ORDER BY  avg_energy DESC
+LIMIT 1;
+
+--Top 10 highest energy values in the dataset
+SELECT CAST( c2 AS REAL) as energy
+From data
+ORDER BY CAST( c2 AS REAL)  DESC
+LIMIT 10;
+
+--Show 10 slowest songs by tempo
+SELECT CAST(c11 as real) as tempo
+From data
+ORDER BY tempo asc
+LIMIT 10;
+
+--Classify songs as High energy, Medium energy and Low energy where high energy (>0.7),Medium energy (0.4-0.7) and low energy (<0.4)
+SElECT
+ CASE 
+    WHEN CAST(C2 AS Real) > 0.7 THEN 'High_energy'
+    WHEN CAST(c2 AS Real) >0.4 and CAST(C2 AS REAL)<=0.7 THEN '	Medium_energy'
+    ELSE 'Low_Energy'
+    END AS Energy_status 
+ FROM data;
+ 
+ --Count how many songs belong to each energy category 
+ SElECT 
+  CASE 
+    WHEN CAST(C2 AS Real) > 0.7 THEN 'High_energy'
+    WHEN CAST(c2 AS Real) >0.4 AND CAST(C2 AS REAL)<=0.7 THEN '	Medium_energy'
+    ELSE 'Low_Energy'
+    END AS Energy_status ,
+    COUNT(*) AS TOTAL_SONGS 
+ FROM data
+ group By Energy_status;
+ 
+ --classify song as tempo 
+SELECT cast(c11 as Real) as tempo ,
+CASE
+    when CAST(C11 AS real)> 100 THEN 'fast_song'
+    WHEN CAST(C11 AS REAL) >=80 and CAST (C11 AS real) <100 THEN 'medium_song'
+    ELSE 'slow_song '
+    END AS song_type
+From data;
+
+--Show keys that have more than 10 songs 
+SELECT CAST(c3 AS REAL) as keys,
+       COUNT(*) AS Total_songs
+FROM data
+GROUP BY keys
+HAVING COUNT(*)>10;
+
+--Show keys whose average danceability is above 0.70
+SELECT c3  as keys,AVG(CAST(c1 AS REAL))as avg_danceability 
+ FROM data 
+ GROUP BY keys
+ HAVING  AVG(CAST(c1 AS REAL)) > 0.70;
+ 
+ --Find songs with energy higher than the dataset average
+ SELECT CAST(c2 as REAL) as energy 
+FROM data 
+WHERE CAST(c2 AS REAL) > 
+(
+  SELECT AVG(CAST(C2 as REAL)) as avg_energy 
+  FROM data 
+  );
+  
+--Find songs with tempo higher than average
+SELECT CAST(c11 as REAL) as tempo
+FROM data 
+WHERE CAST(c11 AS REAL) > 
+(
+  SELECT AVG(CAST(C11 as REAL)) as avg_temp0
+  FROM data 
+  );
+  
+--Show songs and classify them as Above average energy  and below Average Energy 
+SELECT CAST(c2 as REAL) AS energy ,
+CASE WHEN  CAST(C2 as REAL) > 
+(
+  SELECT AVG(CAST(C2 AS REAL)) 
+  FROM data
+  
+ )
+ THEN 'Above_avg_energy'
+ ELSE 'Below_avg_energy'
+ END AS energy_status
+ FROM data;
+ 
+-- Window Function 
+
+-- Show each song's energy along with the oevrall average energy 
+SELECT c2  ,AVG(CAST (c2 AS REAL)) OVER() as avg_energy
+FROM data;
+
+-- number all songs from highest to lowest energy 
+SELECT ROW_NUMBER() OVER(ORDER BY (CAST (C2 as Real) )DESC) AS number,
+CAST (c2 as real) as energy
+FROM data 
+ORDER BY energy DESC;
+
+-- Rank songs based on energy 
+SELECT  RANK() OVER(ORDER BY (CAST(C2 AS REAL)) DESC) AS rank,
+CASt(c2 as REAL) as energy      
+From data ;
+   
+--Rank songs based on danceability 
+SELECT DENSE_RANK() OVER(ORDER BY CAST(C1 AS REAL)DESC) as rank ,
+       CAST(C1 as Real) as danceability 
+FROM data;
+
+--Rank songs within each musical key based on energy 
+SELECT RANK()OVER (PARTITION BY c3 ORDER BY CAST(c2 as REAL) DESc ) as rank ,
+       CAST(c3 as REAL) as keys,
+       CAST(C2 AS REAL) as energy 
+FROM data ;
+
+--Display every song together with the total number of songs in the dataset 
+SELECT CAST(c2 as Real) as energy ,COUNT() OVER() as total_song
+FROM data ;
+
+--Display each song's tempo together with the average tempo 
+SELECT CAST(C11 AS REAL) AS tempo, AVG(CAST(c11 as REAL))OVER() as avg_tempo 
+FROM data ;
+
+--Show a running total of songs when ordered by tempo 
+SELECT CAST(c11 as REAL) as tempo,COUNT(CAST(c11 AS REAL)) OVER(ORDER BY (CAST(C11 as Real))) as number  
+FRom data;
+
+--Display each song's key, tempo, and a running total of tempo within each key, ordered by tempo.
+SELECT CAST(C3 AS REAL) as keys , CAST(C11 AS REAL) as tempo ,SUM(CAST(C11 AS REAL)) OVER(PARTITION BY(CAST(C3 AS REAL))ORDER BY (CAST(C11 AS REAL))) AS Total_tempo
+From data;
+
+--Compare a song's energy with the previous song's energy 
+SELECT CAST(C2 AS REAL),LAG(CAST (c2 as Real) ) OVER(ORDER BY (CAST(C2 AS REAL) )) as previous_energy 
+FRom data;
+
+--Show next song energy for each song 
+SELECT cast(c2 AS REAL) AS energy , LEAD(CAST(C2 AS REAL)) OVER(order by cast(C2 AS REAL)) AS next_song 
+From data;
+
+--Display each song with the highest and lowest energy in the dataset 
+SELECT CAST(C2 AS rEAL) AS energy , MAX(CAST(C2 AS REAL)) OVER() AS maximum_energy , 
+MIN(CAST(C2 AS REAL)) OVER( ) AS minimum_energy 
+FROM data;
+
+
+       
